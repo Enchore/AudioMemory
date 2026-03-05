@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AudioMemory</string>
+    <string name="app_name_cn">录音记忆</string>
+
+    <!-- Recording -->
+    <string name="recording_active">Recording Active</string>
+    <string name="recording_paused">Recording Paused</string>
+    <string name="not_recording">Not Recording</string>
+    <string name="start_recording">Start Recording</string>
+    <string name="stop_recording">Stop Recording</string>
+    <string name="pause_recording">Pause</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_memories">Memories</string>
+    <string name="nav_speakers">Speakers</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Memories -->
+    <string name="search_memories">Search memories...</string>
+    <string name="recent_memories">Recent Memories</string>
+    <string name="no_memories">No memories yet</string>
+
+    <!-- Speakers -->
+    <string name="register_voice">Register Your Voice</string>
+    <string name="owner_label">Owner (You)</string>
+
+    <!-- Settings -->
+    <string name="language_label">Language / 语言</string>
+    <string name="api_key_label">OpenAI API Key</string>
+    <string name="auto_cleanup_label">Auto-cleanup</string>
+    <string name="confidence_threshold_label">Confidence Threshold</string>
+</resources>
