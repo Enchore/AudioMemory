@@ -15,7 +15,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Cloud transcription via OpenAI Whisper API.
+ * Cloud transcription via a configurable Whisper-compatible API.
+ * Supports any OpenAI-compatible transcription endpoint (OpenAI, Groq, local Whisper, etc.)
  * Used as fallback when on-device confidence is below threshold.
  */
 @Singleton
@@ -23,24 +24,39 @@ class OpenAiWhisperTranscriber @Inject constructor(
     private val apiConfig: ApiConfig,
 ) : Transcriber {
 
-    private val api: WhisperApi by lazy {
-        val client = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(60, TimeUnit.SECONDS)
-            .addInterceptor { chain ->
-                val request = chain.request().newBuilder()
-                    .addHeader("Authorization", "Bearer ${apiConfig.openAiApiKey}")
-                    .build()
-                chain.proceed(request)
-            }
-            .build()
+    // Cache the API instance and recreate when config changes
+    private var cachedBaseUrl: String = ""
+    private var cachedApiKey: String = ""
+    private var cachedApi: WhisperApi? = null
 
-        Retrofit.Builder()
-            .baseUrl("https://api.openai.com/")
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(WhisperApi::class.java)
+    private fun getApi(): WhisperApi {
+        val currentBaseUrl = apiConfig.whisperBaseUrl
+        val currentApiKey = apiConfig.whisperApiKey
+
+        if (cachedApi == null || cachedBaseUrl != currentBaseUrl || cachedApiKey != currentApiKey) {
+            val client = OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .addInterceptor { chain ->
+                    val request = chain.request().newBuilder()
+                        .addHeader("Authorization", "Bearer $currentApiKey")
+                        .build()
+                    chain.proceed(request)
+                }
+                .build()
+
+            cachedApi = Retrofit.Builder()
+                .baseUrl(currentBaseUrl)
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(WhisperApi::class.java)
+
+            cachedBaseUrl = currentBaseUrl
+            cachedApiKey = currentApiKey
+        }
+
+        return cachedApi!!
     }
 
     override suspend fun transcribe(wavFilePath: String): TranscriptionResult {
@@ -53,9 +69,10 @@ class OpenAiWhisperTranscriber @Inject constructor(
         val filePart = MultipartBody.Part.createFormData("file", file.name, requestBody)
 
         return try {
+            val api = getApi()
             val response = api.transcribe(
                 file = filePart,
-                model = "whisper-1",
+                model = apiConfig.whisperModel,
                 responseFormat = "verbose_json",
                 language = null, // auto-detect
             )
@@ -80,7 +97,7 @@ class OpenAiWhisperTranscriber @Inject constructor(
 }
 
 /**
- * Retrofit interface for OpenAI Whisper API.
+ * Retrofit interface for OpenAI-compatible Whisper API.
  */
 interface WhisperApi {
     @Multipart

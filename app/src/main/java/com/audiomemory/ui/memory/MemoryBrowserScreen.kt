@@ -24,10 +24,14 @@ import com.audiomemory.ui.theme.*
 @Composable
 fun MemoryBrowserScreen(
     viewModel: MemoryBrowserViewModel = hiltViewModel(),
+    language: String = "zh",
 ) {
     val memories by viewModel.memories.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
+
+    val isZh = language == "zh"
+    fun s(en: String, zh: String) = if (isZh) zh else en
 
     Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
         Spacer(Modifier.height(16.dp))
@@ -37,7 +41,7 @@ fun MemoryBrowserScreen(
             value = searchQuery,
             onValueChange = viewModel::onSearchQueryChanged,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search memories...", color = Color(0xFF475569)) },
+            placeholder = { Text(s("Search memories...", "\u641c\u7d22\u8bb0\u5fc6..."), color = Color(0xFF475569)) },
             leadingIcon = { Icon(Icons.Default.Search, null, tint = Color(0xFF475569)) },
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
@@ -55,7 +59,7 @@ fun MemoryBrowserScreen(
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            FilterChipItem("All", selectedFilter == null, Emerald) { viewModel.onFilterChanged(null) }
+            FilterChipItem(s("All", "\u5168\u90e8"), selectedFilter == null, Emerald) { viewModel.onFilterChanged(null) }
             MemoryType.entries.forEach { type ->
                 val color = when (type) {
                     MemoryType.FACT -> Cyan
@@ -76,7 +80,7 @@ fun MemoryBrowserScreen(
             contentPadding = PaddingValues(bottom = 100.dp),
         ) {
             items(memories) { memoryWithTags ->
-                MemoryListItem(memoryWithTags)
+                MemoryListItem(memoryWithTags, language)
             }
         }
     }
@@ -110,8 +114,11 @@ private fun FilterChipItem(
 }
 
 @Composable
-private fun MemoryListItem(memoryWithTags: MemoryWithTags) {
+private fun MemoryListItem(memoryWithTags: MemoryWithTags, language: String = "zh") {
     val mem = memoryWithTags.memory
+    val isZh = language == "zh"
+    fun s(en: String, zh: String) = if (isZh) zh else en
+
     val typeColor = when (mem.type) {
         MemoryType.FACT -> Cyan
         MemoryType.DECISION -> Purple
@@ -153,7 +160,7 @@ private fun MemoryListItem(memoryWithTags: MemoryWithTags) {
                         )
                     }
                     if (mem.isOwnerSpeech) {
-                        Text("Owner", fontSize = 10.sp, color = Emerald.copy(0.7f))
+                        Text(s("Owner", "\u4e3b\u4eba"), fontSize = 10.sp, color = Emerald.copy(0.7f))
                     }
                 }
                 Spacer(Modifier.height(4.dp))

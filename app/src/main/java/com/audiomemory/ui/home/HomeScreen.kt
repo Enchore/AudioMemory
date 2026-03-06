@@ -30,6 +30,7 @@ import com.audiomemory.ui.theme.*
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToRecording: () -> Unit = {},
+    language: String = "zh",
 ) {
     val isRecording by viewModel.isRecording.collectAsState()
     val isPaused by viewModel.isPaused.collectAsState()
@@ -38,6 +39,9 @@ fun HomeScreen(
     val totalCount by viewModel.totalMemoryCount.collectAsState()
     val speakers by viewModel.speakers.collectAsState()
     val pending by viewModel.pendingChunks.collectAsState()
+
+    val isZh = language == "zh"
+    fun s(en: String, zh: String) = if (isZh) zh else en
 
     LazyColumn(
         modifier = Modifier
@@ -54,6 +58,7 @@ fun HomeScreen(
                 elapsedSeconds = elapsed,
                 pendingChunks = pending,
                 onTap = onNavigateToRecording,
+                language = language,
             )
         }
 
@@ -66,19 +71,19 @@ fun HomeScreen(
                 StatCard(
                     modifier = Modifier.weight(1f),
                     value = totalCount.toString(),
-                    label = "Memories",
+                    label = s("Memories", "\u8bb0\u5fc6"),
                     color = Cyan,
                 )
                 StatCard(
                     modifier = Modifier.weight(1f),
                     value = speakers.size.toString(),
-                    label = "Speakers",
+                    label = s("Speakers", "\u8bf4\u8bdd\u4eba"),
                     color = Purple,
                 )
                 StatCard(
                     modifier = Modifier.weight(1f),
                     value = formatDuration(elapsed),
-                    label = "Session",
+                    label = s("Session", "\u4f1a\u8bdd"),
                     color = Orange,
                 )
             }
@@ -87,7 +92,7 @@ fun HomeScreen(
         // Recent Memories
         item {
             Text(
-                "Recent Memories",
+                s("Recent Memories", "\u6700\u8fd1\u8bb0\u5fc6"),
                 style = MaterialTheme.typography.titleMedium,
                 fontFamily = FontFamily.Monospace,
                 fontSize = 12.sp,
@@ -111,8 +116,8 @@ fun HomeScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Default.Psychology, null, tint = Color(0xFF334155), modifier = Modifier.size(48.dp))
                             Spacer(Modifier.height(12.dp))
-                            Text("No memories yet", color = Color(0xFF475569), fontSize = 14.sp)
-                            Text("Start recording to build your memory", color = Color(0xFF334155), fontSize = 12.sp)
+                            Text(s("No memories yet", "\u8fd8\u6ca1\u6709\u8bb0\u5fc6"), color = Color(0xFF475569), fontSize = 14.sp)
+                            Text(s("Start recording to build your memory", "\u5f00\u59cb\u5f55\u97f3\u6765\u5efa\u7acb\u4f60\u7684\u8bb0\u5fc6"), color = Color(0xFF334155), fontSize = 12.sp)
                         }
                     }
                 }
@@ -157,7 +162,7 @@ fun HomeScreen(
                                 shape = RoundedCornerShape(4.dp),
                             ) {
                                 Text(
-                                    "OWNER",
+                                    s("OWNER", "\u4e3b\u4eba"),
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                     fontSize = 10.sp,
                                     fontFamily = FontFamily.Monospace,
@@ -220,7 +225,11 @@ private fun RecordingStatusCard(
     elapsedSeconds: Long,
     pendingChunks: Int,
     onTap: () -> Unit,
+    language: String = "zh",
 ) {
+    val isZh = language == "zh"
+    fun s(en: String, zh: String) = if (isZh) zh else en
+
     val pulseAnimation = rememberInfiniteTransition(label = "pulse")
     val pulseScale by pulseAnimation.animateFloat(
         initialValue = 1f, targetValue = 1.3f,
@@ -273,9 +282,9 @@ private fun RecordingStatusCard(
             Column {
                 Text(
                     text = when {
-                        isRecording && !isPaused -> "Recording Active"
-                        isPaused -> "Recording Paused"
-                        else -> "Not Recording"
+                        isRecording && !isPaused -> s("Recording Active", "\u5f55\u97f3\u4e2d")
+                        isPaused -> s("Recording Paused", "\u5f55\u97f3\u5df2\u6682\u505c")
+                        else -> s("Not Recording", "\u672a\u5f55\u97f3")
                     },
                     fontWeight = FontWeight.SemiBold,
                     color = when {
@@ -294,7 +303,7 @@ private fun RecordingStatusCard(
                 }
                 if (pendingChunks > 0) {
                     Text(
-                        "$pendingChunks chunks pending",
+                        s("$pendingChunks chunks pending", "$pendingChunks \u4e2a\u7247\u6bb5\u5f85\u5904\u7406"),
                         fontFamily = FontFamily.Monospace,
                         fontSize = 10.sp,
                         color = Cyan.copy(alpha = 0.7f),

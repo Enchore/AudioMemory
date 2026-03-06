@@ -27,6 +27,7 @@ import com.audiomemory.ui.theme.*
 @Composable
 fun SpeakerManagementScreen(
     viewModel: SpeakerViewModel = hiltViewModel(),
+    language: String = "zh",
 ) {
     val speakers by viewModel.speakers.collectAsState()
     val owner = speakers.firstOrNull { it.isOwner }
@@ -34,6 +35,9 @@ fun SpeakerManagementScreen(
     val enrollmentState by viewModel.enrollmentState.collectAsState()
     val progress by viewModel.enrollmentProgress.collectAsState()
     val secondsLeft by viewModel.enrollmentSecondsLeft.collectAsState()
+
+    val isZh = language == "zh"
+    fun s(en: String, zh: String) = if (isZh) zh else en
 
     // Edit speaker name dialog state
     var editingSpeaker by remember { mutableStateOf<SpeakerEntity?>(null) }
@@ -46,12 +50,12 @@ fun SpeakerManagementScreen(
     if (editingSpeaker != null) {
         AlertDialog(
             onDismissRequest = { editingSpeaker = null },
-            title = { Text("Rename Speaker") },
+            title = { Text(s("Rename Speaker", "\u91cd\u547d\u540d\u8bf4\u8bdd\u4eba")) },
             text = {
                 OutlinedTextField(
                     value = editName,
                     onValueChange = { editName = it },
-                    label = { Text("Name") },
+                    label = { Text(s("Name", "\u540d\u79f0")) },
                     singleLine = true,
                 )
             },
@@ -59,10 +63,10 @@ fun SpeakerManagementScreen(
                 TextButton(onClick = {
                     editingSpeaker?.let { viewModel.updateSpeakerName(it.id, editName) }
                     editingSpeaker = null
-                }) { Text("Save") }
+                }) { Text(s("Save", "\u4fdd\u5b58")) }
             },
             dismissButton = {
-                TextButton(onClick = { editingSpeaker = null }) { Text("Cancel") }
+                TextButton(onClick = { editingSpeaker = null }) { Text(s("Cancel", "\u53d6\u6d88")) }
             },
         )
     }
@@ -71,16 +75,17 @@ fun SpeakerManagementScreen(
     if (deletingSpeaker != null) {
         AlertDialog(
             onDismissRequest = { deletingSpeaker = null },
-            title = { Text("Delete Speaker") },
-            text = { Text("Delete \"${deletingSpeaker?.name}\"? This cannot be undone.") },
+            title = { Text(s("Delete Speaker", "\u5220\u9664\u8bf4\u8bdd\u4eba")) },
+            text = { Text(s("Delete \"${deletingSpeaker?.name}\"? This cannot be undone.",
+                "\u5220\u9664 \"${deletingSpeaker?.name}\"\uff1f\u6b64\u64cd\u4f5c\u4e0d\u53ef\u64a4\u9500\u3002")) },
             confirmButton = {
                 TextButton(onClick = {
                     deletingSpeaker?.let { viewModel.deleteSpeaker(it) }
                     deletingSpeaker = null
-                }) { Text("Delete", color = Pink) }
+                }) { Text(s("Delete", "\u5220\u9664"), color = Pink) }
             },
             dismissButton = {
-                TextButton(onClick = { deletingSpeaker = null }) { Text("Cancel") }
+                TextButton(onClick = { deletingSpeaker = null }) { Text(s("Cancel", "\u53d6\u6d88")) }
             },
         )
     }
@@ -93,7 +98,7 @@ fun SpeakerManagementScreen(
         // Owner Section
         item {
             Text(
-                "OWNER",
+                s("OWNER", "\u4e3b\u4eba"),
                 fontFamily = FontFamily.Monospace,
                 fontSize = 11.sp,
                 color = Emerald,
@@ -103,9 +108,8 @@ fun SpeakerManagementScreen(
 
         item {
             if (owner != null && enrollmentState is EnrollmentState.Idle) {
-                OwnerCard(owner, onReEnroll = { viewModel.startOwnerEnrollment() })
+                OwnerCard(owner, onReEnroll = { viewModel.startOwnerEnrollment() }, language = language)
             } else if (owner != null) {
-                // Re-enrolling — show enrollment UI
                 EnrollmentCard(
                     enrollmentState = enrollmentState,
                     progress = progress,
@@ -113,6 +117,7 @@ fun SpeakerManagementScreen(
                     onStart = { viewModel.startOwnerEnrollment() },
                     onCancel = { viewModel.cancelEnrollment() },
                     onDismissError = { viewModel.dismissError() },
+                    language = language,
                 )
             } else {
                 EnrollmentCard(
@@ -122,6 +127,7 @@ fun SpeakerManagementScreen(
                     onStart = { viewModel.startOwnerEnrollment() },
                     onCancel = { viewModel.cancelEnrollment() },
                     onDismissError = { viewModel.dismissError() },
+                    language = language,
                 )
             }
         }
@@ -131,7 +137,7 @@ fun SpeakerManagementScreen(
             item {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "OTHER SPEAKERS",
+                    s("OTHER SPEAKERS", "\u5176\u4ed6\u8bf4\u8bdd\u4eba"),
                     fontFamily = FontFamily.Monospace,
                     fontSize = 11.sp,
                     color = Cyan,
@@ -159,7 +165,11 @@ private fun EnrollmentCard(
     onStart: () -> Unit,
     onCancel: () -> Unit,
     onDismissError: () -> Unit,
+    language: String = "zh",
 ) {
+    val isZh = language == "zh"
+    fun s(en: String, zh: String) = if (isZh) zh else en
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0A1A10)),
@@ -178,10 +188,11 @@ private fun EnrollmentCard(
                 is EnrollmentState.Idle -> {
                     Icon(Icons.Default.RecordVoiceOver, null, tint = Emerald, modifier = Modifier.size(40.dp))
                     Spacer(Modifier.height(12.dp))
-                    Text("Register Your Voice", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text(s("Register Your Voice", "\u6ce8\u518c\u4f60\u7684\u58f0\u97f3"), fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Record 10 seconds of your voice so AudioMemory can identify you",
+                        s("Record 10 seconds of your voice so AudioMemory can identify you",
+                            "\u5f55\u5236 10 \u79d2\u4f60\u7684\u58f0\u97f3\uff0c\u8ba9\u5e94\u7528\u80fd\u591f\u8bc6\u522b\u4f60"),
                         fontSize = 12.sp, color = Color(0xFF64748B),
                         modifier = Modifier.padding(horizontal = 16.dp),
                         lineHeight = 18.sp, textAlign = TextAlign.Center,
@@ -194,7 +205,7 @@ private fun EnrollmentCard(
                     ) {
                         Icon(Icons.Default.Mic, null, tint = Color.Black, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Start Enrollment", color = Color.Black, fontWeight = FontWeight.SemiBold)
+                        Text(s("Start Enrollment", "\u5f00\u59cb\u6ce8\u518c"), color = Color.Black, fontWeight = FontWeight.SemiBold)
                     }
                 }
 
@@ -213,10 +224,10 @@ private fun EnrollmentCard(
                         modifier = Modifier.size(48.dp),
                     )
                     Spacer(Modifier.height(12.dp))
-                    Text("Recording...", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color(0xFFFF4444))
+                    Text(s("Recording...", "\u5f55\u97f3\u4e2d..."), fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color(0xFFFF4444))
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Speak naturally for ${secondsLeft}s",
+                        s("Speak naturally for ${secondsLeft}s", "\u8bf7\u81ea\u7136\u8bf4\u8bdd\uff0c\u8fd8\u5269 ${secondsLeft} \u79d2"),
                         fontSize = 13.sp, color = Color(0xFF94A3B8),
                     )
                     Spacer(Modifier.height(16.dp))
@@ -231,7 +242,7 @@ private fun EnrollmentCard(
                         onClick = onCancel,
                         shape = RoundedCornerShape(12.dp),
                     ) {
-                        Text("Cancel", color = Color(0xFF94A3B8))
+                        Text(s("Cancel", "\u53d6\u6d88"), color = Color(0xFF94A3B8))
                     }
                 }
 
@@ -241,21 +252,21 @@ private fun EnrollmentCard(
                         color = Emerald, strokeWidth = 3.dp,
                     )
                     Spacer(Modifier.height(12.dp))
-                    Text("Analyzing voice...", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text(s("Analyzing voice...", "\u5206\u6790\u58f0\u97f3\u4e2d..."), fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                     Spacer(Modifier.height(4.dp))
-                    Text("Extracting voice profile", fontSize = 12.sp, color = Color(0xFF64748B))
+                    Text(s("Extracting voice profile", "\u6b63\u5728\u63d0\u53d6\u58f0\u7eb9\u7279\u5f81"), fontSize = 12.sp, color = Color(0xFF64748B))
                 }
 
                 is EnrollmentState.Success -> {
                     Icon(Icons.Default.CheckCircle, null, tint = Emerald, modifier = Modifier.size(48.dp))
                     Spacer(Modifier.height(12.dp))
-                    Text("Voice Registered!", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Emerald)
+                    Text(s("Voice Registered!", "\u58f0\u97f3\u6ce8\u518c\u6210\u529f\uff01"), fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Emerald)
                 }
 
                 is EnrollmentState.Error -> {
                     Icon(Icons.Default.Error, null, tint = Pink, modifier = Modifier.size(40.dp))
                     Spacer(Modifier.height(12.dp))
-                    Text("Enrollment Failed", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Pink)
+                    Text(s("Enrollment Failed", "\u6ce8\u518c\u5931\u8d25"), fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Pink)
                     Spacer(Modifier.height(4.dp))
                     Text(
                         enrollmentState.message, fontSize = 12.sp, color = Color(0xFF94A3B8),
@@ -268,7 +279,7 @@ private fun EnrollmentCard(
                         colors = ButtonDefaults.buttonColors(containerColor = Emerald),
                         shape = RoundedCornerShape(12.dp),
                     ) {
-                        Text("Try Again", color = Color.Black, fontWeight = FontWeight.SemiBold)
+                        Text(s("Try Again", "\u91cd\u8bd5"), color = Color.Black, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -277,7 +288,10 @@ private fun EnrollmentCard(
 }
 
 @Composable
-private fun OwnerCard(owner: SpeakerEntity, onReEnroll: () -> Unit) {
+private fun OwnerCard(owner: SpeakerEntity, onReEnroll: () -> Unit, language: String = "zh") {
+    val isZh = language == "zh"
+    fun s(en: String, zh: String) = if (isZh) zh else en
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0A1A10)),
@@ -298,16 +312,17 @@ private fun OwnerCard(owner: SpeakerEntity, onReEnroll: () -> Unit) {
             }
             Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("Owner (You)", fontWeight = FontWeight.SemiBold, color = Emerald)
+                Text(s("Owner (You)", "\u4e3b\u4eba\uff08\u4f60\uff09"), fontWeight = FontWeight.SemiBold, color = Emerald)
                 Text(
-                    "${owner.totalSegments} segments | Voice enrolled",
+                    s("${owner.totalSegments} segments | Voice enrolled",
+                        "${owner.totalSegments} \u4e2a\u7247\u6bb5 | \u5df2\u6ce8\u518c\u58f0\u7eb9"),
                     fontFamily = FontFamily.Monospace,
                     fontSize = 11.sp,
                     color = Color(0xFF64748B),
                 )
             }
             IconButton(onClick = onReEnroll) {
-                Icon(Icons.Default.Refresh, "Re-enroll", tint = Color(0xFF475569), modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Refresh, s("Re-enroll", "\u91cd\u65b0\u6ce8\u518c"), tint = Color(0xFF475569), modifier = Modifier.size(18.dp))
             }
         }
     }

@@ -26,10 +26,15 @@ import com.audiomemory.ui.recording.RecordingScreen
 import com.audiomemory.ui.settings.SettingsScreen
 import com.audiomemory.ui.speaker.SpeakerManagementScreen
 import com.audiomemory.ui.theme.*
+import com.audiomemory.util.ApiConfig
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject lateinit var apiConfig: ApiConfig
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -66,6 +71,10 @@ class MainActivity : ComponentActivity() {
         val currentRoute by navController.currentBackStackEntryAsState()
         val currentDestination = currentRoute?.destination?.route
 
+        // Observe language setting for navigation bar
+        val language by apiConfig.languageFlow
+            .collectAsState(initial = "zh")
+
         Scaffold(
             bottomBar = {
                 NavigationBar(
@@ -94,7 +103,7 @@ class MainActivity : ComponentActivity() {
                             },
                             label = {
                                 Text(
-                                    screen.titleEn,
+                                    screen.title(language),
                                     fontSize = 10.sp,
                                     fontFamily = FontFamily.Monospace,
                                     color = if (selected) Emerald else Color(0xFF475569),
@@ -115,7 +124,8 @@ class MainActivity : ComponentActivity() {
             ) {
                 composable(Screen.Home.route) {
                     HomeScreen(
-                        onNavigateToRecording = { navController.navigate(Screen.Recording.route) }
+                        onNavigateToRecording = { navController.navigate(Screen.Recording.route) },
+                        language = language,
                     )
                 }
                 composable(Screen.Recording.route) {
@@ -124,13 +134,14 @@ class MainActivity : ComponentActivity() {
                         onStopRecording = { stopRecordingService() },
                         onPauseRecording = { pauseRecordingService() },
                         onResumeRecording = { resumeRecordingService() },
+                        language = language,
                     )
                 }
                 composable(Screen.Memories.route) {
-                    MemoryBrowserScreen()
+                    MemoryBrowserScreen(language = language)
                 }
                 composable(Screen.Speakers.route) {
-                    SpeakerManagementScreen()
+                    SpeakerManagementScreen(language = language)
                 }
                 composable(Screen.Settings.route) {
                     SettingsScreen()

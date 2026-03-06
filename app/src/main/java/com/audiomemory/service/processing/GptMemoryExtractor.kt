@@ -13,12 +13,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Extracts structured memories from transcribed text using GPT-4o-mini.
+ * Extracts structured memories from transcribed text using a configurable LLM API.
  *
- * Sends transcription + speaker labels → receives structured JSON with:
- * - memories: key facts, decisions, action items, insights
- * - ownerInsights: observations about the owner's behavior/preferences
- * - tags: auto-generated topic tags
+ * Supports any OpenAI-compatible API (OpenAI, DeepSeek, Groq, local LLM, etc.)
+ * by configuring base URL, model name, and API key in ApiConfig.
  */
 @Singleton
 class GptMemoryExtractor @Inject constructor(
@@ -26,24 +24,40 @@ class GptMemoryExtractor @Inject constructor(
 ) {
     private val gson = Gson()
 
-    private val api: ChatApi by lazy {
-        val client = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(90, TimeUnit.SECONDS)
-            .addInterceptor { chain ->
-                val request = chain.request().newBuilder()
-                    .addHeader("Authorization", "Bearer ${apiConfig.openAiApiKey}")
-                    .build()
-                chain.proceed(request)
-            }
-            .build()
+    // Cache the API instance and recreate when config changes
+    private var cachedBaseUrl: String = ""
+    private var cachedApiKey: String = ""
+    private var cachedApi: ChatApi? = null
 
-        Retrofit.Builder()
-            .baseUrl("https://api.openai.com/")
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(ChatApi::class.java)
+    private fun getApi(): ChatApi {
+        val currentBaseUrl = apiConfig.llmBaseUrl
+        val currentApiKey = apiConfig.llmApiKey
+
+        // Recreate if config has changed
+        if (cachedApi == null || cachedBaseUrl != currentBaseUrl || cachedApiKey != currentApiKey) {
+            val client = OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(90, TimeUnit.SECONDS)
+                .addInterceptor { chain ->
+                    val request = chain.request().newBuilder()
+                        .addHeader("Authorization", "Bearer $currentApiKey")
+                        .build()
+                    chain.proceed(request)
+                }
+                .build()
+
+            cachedApi = Retrofit.Builder()
+                .baseUrl(currentBaseUrl)
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(ChatApi::class.java)
+
+            cachedBaseUrl = currentBaseUrl
+            cachedApiKey = currentApiKey
+        }
+
+        return cachedApi!!
     }
 
     /**
@@ -101,8 +115,9 @@ Respond ONLY with valid JSON matching this schema:
         }
 
         return try {
+            val api = getApi()
             val response = api.chat(ChatRequest(
-                model = "gpt-4o-mini",
+                model = apiConfig.llmModel,
                 messages = listOf(
                     ChatMessage("system", systemPrompt),
                     ChatMessage("user", userMessage),

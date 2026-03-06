@@ -30,10 +30,14 @@ fun RecordingScreen(
     onStopRecording: () -> Unit,
     onPauseRecording: () -> Unit,
     onResumeRecording: () -> Unit,
+    language: String = "zh",
 ) {
     val isRecording by AudioRecordingService.isRecording.collectAsState()
     val isPaused by AudioRecordingService.isPaused.collectAsState()
     val elapsed by AudioRecordingService.elapsedSeconds.collectAsState()
+
+    val isZh = language == "zh"
+    fun s(en: String, zh: String) = if (isZh) zh else en
 
     val pulseAnim = rememberInfiniteTransition(label = "pulse")
     val pulse by pulseAnim.animateFloat(
@@ -50,9 +54,9 @@ fun RecordingScreen(
         // Status Text
         Text(
             when {
-                isRecording && !isPaused -> "RECORDING"
-                isPaused -> "PAUSED"
-                else -> "READY"
+                isRecording && !isPaused -> s("RECORDING", "\u5f55\u97f3\u4e2d")
+                isPaused -> s("PAUSED", "\u5df2\u6682\u505c")
+                else -> s("READY", "\u5c31\u7eea")
             },
             fontFamily = FontFamily.Monospace,
             fontSize = 12.sp,
@@ -178,8 +182,9 @@ fun RecordingScreen(
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Processing Queue", fontSize = 12.sp, color = Color(0xFF64748B))
-                    Text("Audio chunks are being processed in the background",
+                    Text(s("Processing Queue", "\u5904\u7406\u961f\u5217"), fontSize = 12.sp, color = Color(0xFF64748B))
+                    Text(s("Audio chunks are being processed in the background",
+                        "\u97f3\u9891\u7247\u6bb5\u6b63\u5728\u540e\u53f0\u5904\u7406\u4e2d"),
                         fontSize = 11.sp, color = Color(0xFF475569))
                 }
             }

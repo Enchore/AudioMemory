@@ -13,11 +13,14 @@ sealed class Screen(
     val titleZh: String,
     val icon: ImageVector,
 ) {
-    data object Home : Screen("home", "Home", "主页", Icons.Default.Home)
-    data object Recording : Screen("recording", "Recording", "录音", Icons.Default.Mic)
-    data object Memories : Screen("memories", "Memories", "记忆", Icons.Default.Psychology)
-    data object Speakers : Screen("speakers", "Speakers", "说话人", Icons.Default.People)
-    data object Settings : Screen("settings", "Settings", "设置", Icons.Default.Settings)
+    /** Returns the title based on current language setting */
+    fun title(language: String): String = if (language == "zh") titleZh else titleEn
+
+    data object Home : Screen("home", "Home", "\u4e3b\u9875", Icons.Default.Home)
+    data object Recording : Screen("recording", "Recording", "\u5f55\u97f3", Icons.Default.Mic)
+    data object Memories : Screen("memories", "Memories", "\u8bb0\u5fc6", Icons.Default.Psychology)
+    data object Speakers : Screen("speakers", "Speakers", "\u8bf4\u8bdd\u4eba", Icons.Default.People)
+    data object Settings : Screen("settings", "Settings", "\u8bbe\u7f6e", Icons.Default.Settings)
 
     companion object {
         val bottomNavItems = listOf(Home, Memories, Speakers, Settings)
