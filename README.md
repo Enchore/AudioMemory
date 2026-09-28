@@ -1,5 +1,8 @@
 # AudioMemory
 
+[![CI](https://github.com/Enchore/AudioMemory/actions/workflows/ci.yml/badge.svg)](https://github.com/Enchore/AudioMemory/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 > 录音转文字、识别说话人、再交给大模型提炼成结构化记忆的 Android 应用
 
 ## 项目简介
