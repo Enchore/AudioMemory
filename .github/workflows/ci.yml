@@ -23,19 +23,24 @@ jobs:
         with:
           java-version: "17"
           distribution: temurin
-          cache: gradle
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-
-      - name: Accept Android licenses
+      - name: Install Gradle 8.13
+        # 不用 ./gradlew：仓库的 wrapper 在某些网络环境下取不到发行包。
+        # 这里按 gradle-wrapper.properties 指定的同一版本直接下载安装，
+        # curl 走 runner 的网络代理策略，比 wrapper 自带的 Java 下载器稳。
         run: |
-          yes | sdkmanager --licenses > /dev/null || true
+          curl -fsSL -o /tmp/gradle.zip \
+            https://services.gradle.org/distributions/gradle-8.13-bin.zip
+          unzip -q /tmp/gradle.zip -d /opt/gradle
+          echo "/opt/gradle/gradle-8.13/bin" >> "$GITHUB_PATH"
+
+      - name: Verify toolchain
+        run: gradle --version | head -6
 
       - name: Run unit tests
-        # 只跑 JVM 单元测试，不打包 APK：不需要签名密钥，也不会触发
-        # Compose/UI 的完整编译流程，跑得快且不会因为缺 keystore 而失败。
-        run: ./gradlew :app:testDebugUnitTest --no-daemon
+        # 只跑 JVM 单元测试，不打包 APK：不需要签名密钥，
+        # 也不会触发 Compose UI 的完整编译。
+        run: gradle :app:testDebugUnitTest --no-daemon
 
       - name: Upload test report
         if: always()
